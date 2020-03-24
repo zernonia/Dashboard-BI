@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Credit Approval</title>
+    <link rel="stylesheet" href="dc.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/web-animations-js@2.3.2/web-animations.min.js"></script>
+    <script src="https://unpkg.com/muuri@0.8.0/dist/muuri.min.js"></script>
+
+</head>
+<body>
+    <div class="heading">
+        <h1>Welcome to Credit Approval Analysis</h1>
+        <div>
+            <a class="resetall" href="javascript:dc.filterAll(); dc.renderAll();">Reset All</a>
+            <button class="edit_drag" id="edit" onclick="dragOn()">Edit</button>
+            <button class="edit_drag" id="save" onclick="window.location.reload(false)">Save</button>
+        </div>
+    </div>
+    
+    <div id="editing">Editing</div>
+
+    <div class="grid">
+        <div class="item" data-id="1">
+            <div class="item-content">
+                <div class="chart" id="gender"><strong>Gender</strong>
+                    <a class="reset" href="javascript:genderChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+                    <div class="clearfix"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="item" data-id="2">
+            <div class="item-content">
+                <div class="chart" id="age"><strong>Age</strong>
+                    <a class="reset" href="javascript:ageChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+                    <div class="clearfix"></div>
+                </div>
+            </div>
+        </div>    
+
+        <div class="item" data-id="3">
+            <div class="item-content">
+                <div class="chart" id="married"><strong>Married?</strong>
+                    <a class="reset" href="javascript:marriedChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+                    <div class="clearfix"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="item" data-id="4">
+            <div class="item-content">
+                <div class="chart" id="income"><strong>Income</strong>
+                    <a class="reset" href="javascript:incomeChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+                    <div class="clearfix"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="item" data-id="5">
+            <div class="item-content">
+                <div class="chart" id="count"><strong>Count</strong>
+                    <span class = "filter-count"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="item" data-id="7">
+            <div class="item-content">
+                <div class="chart" id="ethnic"><strong>Ethnic</strong>
+                    <a class="reset" href="javascript:ethnicChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+                    <div class="clearfix"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="item" data-id="6">
+            <div class="item-content">
+                <div class="chart">
+                    <table id="table">
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <script src="crossfilter.js"></script>
+    <script src="d3.js"></script>
+    <script src="dc.js"></script>
+
+
+    <script>
+        document.querySelector(".edit_drag").addEventListener("click", function(){
+            document.querySelector("#edit").style.display = "none";
+            document.querySelector("#save").style.display = "inline";
+            document.querySelector("#editing").style.display = "inline";
+
+        })
+
+        var genderChart = dc.pieChart('#gender')
+        var ageChart = dc.lineChart('#age')
+        // var debtChart = dc.Chart('#debt')
+        var marriedChart = dc.pieChart('#married')
+        // var bankChart = dc.pieChart('#bank')
+        // var eduChart = dc.pieChart('#edu')
+        var ethnicChart = dc.barChart('#ethnic')
+        // var creditChart = dc.pieChart('#credit')
+        var incomeChart = dc.pieChart('#income')
+        // var approveChart = dc.pieChart('#approve')
+        var visTable = dc.dataTable("#table")
+        var visCount = dc.dataCount("#count")
+
+    //Male","Age","Debt","Married","BankCustomer","EducationLevel","Ethnicity","YearsEmployed","PriorDefault","Employed","CreditScore", "DriversLicense","Citizen","ZipCode","Income","Approved"
+    //b,30.83,0,u,g,w,v,1.25,t,t,01,f,g,00202,0,+
+    // a,58.67,4.46,u,g,q,h,3.04,t,t,06,f,g,00043,560,+
+    // a,24.50,0.5,u,g,q,h,1.5,t,f,0,f,g,00280,824,+
+    // b,27.83,1.54,u,g,w,v,3.75,t,t,05,t,g,00100,3,+
+    // b,20.17,5.625,u,g,w,v,1.71,t,f,0,f,s,00120,0,+
+
+    d3.csv("crx.csv", function(err,data)
+    {
+        if (err) throw err;
+
+        data.forEach( d => {
+            d.Age = Math.round(d.Age)
+        })
+
+        console.log(data)
+
+        var ndx = crossfilter(data);
+        var all = ndx.groupAll();
+
+        var genderDim = ndx.dimension(d => d["Male"])
+        var ageDim = ndx.dimension(d => d["Age"])
+        var debtDim = ndx.dimension(d => d["Debt"])
+        var marriedDim = ndx.dimension(d => d["Married"])
+        var bankDim = ndx.dimension(d => d["BankCustomer"])
+        var eduDim = ndx.dimension(d => d["EducationLevel"])
+        var ethnicDim = ndx.dimension(d => d["Ethnicity"])
+        var creditDim = ndx.dimension(d => d["CreditScore"])
+        var incomeDim = ndx.dimension(d => d["Income"])
+        var approveDim = ndx.dimension(d => d["Approved"])
+
+        var genderGroup = genderDim.group();
+        var ageGroup = ageDim.group();
+        var debtGroup = debtDim.group();
+        var marriedGroup = marriedDim.group();
+        var bankGroup = bankDim.group();
+        var eduGroup = eduDim.group();
+        var ethnicGroup = ethnicDim.group();
+        var creditGroup = creditDim.group();
+        var incomeGroup = incomeDim.group();
+        var approveGroup = approveDim.group();
+
+        genderChart
+            .dimension(genderDim)
+            .group(genderGroup)
+
+        ageChart
+            .dimension(ageDim)
+            .group(ageGroup)
+            .elasticX(true)
+            .x(d3.scale.linear().domain([15,70]))
+            .width(800)
+            .height(300)
+
+        // debtChart
+        //     .dimension(debtDim)
+        //     .group(debtGroup)
+            
+        marriedChart
+            .dimension(marriedDim)
+            .group(marriedGroup)
+
+        // bankChart
+        //     .dimension(bankDim)
+        //     .group(bankGroup)
+
+        // eduChart
+        //     .dimension(eduDim)
+        //     .group(eduGroup)
+
+        ethnicChart
+            .dimension(ethnicDim)
+            .group(ethnicGroup)
+            .x(d3.scale.ordinal())
+            .xUnits(dc.units.ordinal)
+            .height(400)
+            .elasticY(true)
+
+        // creditChart
+        //     .dimension(creditDim)
+        //     .group(creditGroup)
+
+        incomeChart
+            .dimension(incomeDim)
+            .group(incomeGroup)
+            .data(d => d.top(10)) 
+
+
+        // approveChart
+        //     .dimension(approveDim)
+        //     .group(approveGroup)
+
+        visTable
+            .dimension(approveDim)
+            .group(d => "")
+            .columns(["Approved","Male", "Age", "Married", "Ethnicity", "Income"])
+            .size(10)
+        
+        visCount
+            .dimension(ndx)
+            .group(all)
+            
+        dc.renderAll();
+    })
+
+
+    window.onload = () =>{
+        initGrid(false);
+    }
+    
+    function dragOn(){
+        initGrid(true)
+    }
+
+    function dragOff(){
+        initGrid(false)
+    }
+
+    function initGrid(d) {
+    var grid = new Muuri('.grid', {
+        dragEnabled: d,
+        layoutOnInit: false
+    }).on('move', function () {
+        saveLayout(grid);
+    });
+
+    var layout = window.localStorage.getItem('layout');
+    if (layout) {
+        loadLayout(grid, layout);
+    } else {
+        grid.layout(true);
+    }
+    }
+
+    function serializeLayout(grid) {
+    var itemIds = grid.getItems().map(function (item) {
+        return item.getElement().getAttribute('data-id');
+    });
+    return JSON.stringify(itemIds);
+    }
+
+    function saveLayout(grid) {
+    var layout = serializeLayout(grid);
+    window.localStorage.setItem('layout', layout);
+    }
+
+    function loadLayout(grid, serializedLayout) {
+    var layout = JSON.parse(serializedLayout);
+    var currentItems = grid.getItems();
+    var currentItemIds = currentItems.map(function (item) {
+        return item.getElement().getAttribute('data-id')
+    });
+    var newItems = [];
+    var itemId;
+    var itemIndex;
+
+    for (var i = 0; i < layout.length; i++) {
+        itemId = layout[i];
+        itemIndex = currentItemIds.indexOf(itemId);
+        if (itemIndex > -1) {
+        newItems.push(currentItems[itemIndex])
+        }
+    }
+
+    grid.sort(newItems, {layout: 'instant'});
+    }
+
+    </script>
+</body>
+</html>
